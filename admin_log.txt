@@ -1,0 +1,16 @@
+
+> admin-panel@0.1.0 dev
+> next dev
+
+Ôû▓ Next.js 16.1.6 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.10.232:3000
+
+Ô£ô Starting...
+Ô£ô Ready in 593ms
+ GET / 200 in 53ms (compile: 3ms, render: 50ms)
+ GET /api/test 404 in 628ms (compile: 585ms, render: 43ms)
+ GET /api/test 404 in 28ms (compile: 4ms, render: 25ms)
+ GET / 200 in 48ms (compile: 6ms, render: 42ms)
+ GET /api/test 404 in 35ms (compile: 5ms, render: 30ms)
+ GET / 200 in 35ms (compile: 3ms, render: 32ms)
