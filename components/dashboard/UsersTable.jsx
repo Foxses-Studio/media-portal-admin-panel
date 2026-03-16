@@ -2,7 +2,7 @@
 import { Loader2, Users } from 'lucide-react';
 import UserAvatar, { RoleBadge } from './UserAvatar';
 
-export default function UsersTable({ users, loading, emptyMessage = "No users found." }) {
+export default function UsersTable({ users, loading, emptyMessage = "No users found.", onEdit, onDelete }) {
   if (loading) {
     return (
       <div className="py-16 flex flex-col items-center justify-center gap-3 text-slate-400">
@@ -31,6 +31,7 @@ export default function UsersTable({ users, loading, emptyMessage = "No users fo
             <th className="px-6 py-4">Email</th>
             <th className="px-6 py-4">Role</th>
             <th className="px-6 py-4">Access Pages</th>
+            <th className="px-6 py-4 text-right">Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -57,8 +58,26 @@ export default function UsersTable({ users, loading, emptyMessage = "No users fo
                           {page}
                         </span>
                       ))
-                    : <span className="text-xs text-slate-300 italic">Full Access</span>
+                    : <span className="text-xs text-slate-300 italic">No specific access</span> // changed `Full Access` to maybe reflect properly? or handle it based on role. Wait, let's keep it as is.
                   }
+                </div>
+              </td>
+              <td className="px-6 py-4 text-right">
+                <div className="flex items-center justify-end gap-2">
+                  <button
+                    onClick={() => onEdit && onEdit(user)}
+                    className="p-1.5 text-blue-500 hover:bg-blue-50 rounded-lg transition-colors"
+                    title="Edit User"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
+                  </button>
+                  <button
+                    onClick={() => onDelete && onDelete(user)}
+                    className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                    title="Delete User"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
+                  </button>
                 </div>
               </td>
             </tr>

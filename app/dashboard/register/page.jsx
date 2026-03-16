@@ -27,6 +27,7 @@ export default function RegisterUserPage() {
   const [showForm, setShowForm]         = useState(false);
   const [filterRole, setFilterRole]     = useState('All');
   const [formData, setFormData]         = useState(EMPTY_FORM);
+  const [editUserId, setEditUserId]     = useState(null);
   const [status, setStatus]             = useState(null); // null | 'loading' | 'success' | 'error'
   const [message, setMessage]           = useState('');
 
@@ -65,27 +66,63 @@ export default function RegisterUserPage() {
     const payload = {
       name:     formData.name,
       email:    formData.email,
-      password: formData.password,
       role:     formData.role.toLowerCase(),
     };
+    
+    if (formData.password) {
+      payload.password = formData.password;
+    }
 
     if (formData.role === 'moderator' && formData.accessiblePages.length > 0) {
       payload.accessiblePages = formData.accessiblePages;
+    } else if (formData.role === 'admin' || formData.role === 'editor') {
+      payload.accessiblePages = [];
     }
 
-    const token    = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-    const endpoint = token ? '/users' : '/auth/admin/register';
-
     try {
-      await axios.post(endpoint, payload);
-      setStatus('success');
-      setMessage(`${formData.name} has been registered successfully!`);
+      if (editUserId) {
+        await axios.put(`/users/${editUserId}`, payload);
+        setStatus('success');
+        setMessage(`${formData.name} has been updated successfully!`);
+      } else {
+        const token    = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+        const endpoint = token ? '/users' : '/auth/admin/register';
+        await axios.post(endpoint, payload);
+        setStatus('success');
+        setMessage(`${formData.name} has been registered successfully!`);
+      }
       setFormData(EMPTY_FORM);
+      setEditUserId(null);
       fetchUsers();
       setTimeout(() => { setShowForm(false); setStatus(null); }, 2500);
     } catch (err) {
       setStatus('error');
-      setMessage(err.response?.data?.message || err.message || 'Registration failed. Please try again.');
+      setMessage(err.response?.data?.message || err.message || 'Operation failed. Please try again.');
+    }
+  };
+
+  const handleEdit = (user) => {
+    setEditUserId(user._id);
+    setFormData({
+      name: user.name || '',
+      email: user.email || '',
+      password: '',
+      role: user.role?.toLowerCase() || 'editor',
+      accessiblePages: user.accessiblePages || [],
+    });
+    setShowForm(true);
+    setStatus(null);
+    setMessage('');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleDelete = async (user) => {
+    if (!window.confirm(`Are you sure you want to delete ${user.name || user.email}?`)) return;
+    try {
+      await axios.delete(`/users/${user._id}`);
+      fetchUsers();
+    } catch (err) {
+      alert(err.response?.data?.message || err.message || 'Failed to delete user.');
     }
   };
 
@@ -103,7 +140,15 @@ export default function RegisterUserPage() {
           <p className="text-sm text-slate-400 mt-0.5">View all registered users and manage their access.</p>
         </div>
         <button
-          onClick={() => { setShowForm(f => !f); setStatus(null); setMessage(''); }}
+          onClick={() => { 
+            setShowForm(f => !f); 
+            setStatus(null); 
+            setMessage(''); 
+            if (!showForm) {
+              setFormData(EMPTY_FORM);
+              setEditUserId(null);
+            }
+          }}
           className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm transition-all shadow-sm ${
             showForm
               ? 'bg-slate-100 text-slate-600 hover:bg-slate-200 border border-slate-200'
@@ -118,7 +163,7 @@ export default function RegisterUserPage() {
       {showForm && (
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
           <div className="px-7 py-5 border-b border-slate-100 flex items-center justify-between">
-            <h3 className="text-base font-bold text-slate-800">Create New User Account</h3>
+            <h3 className="text-base font-bold text-slate-800">{editUserId ? 'Update User Account' : 'Create New User Account'}</h3>
             <span className="text-xs text-slate-400 bg-slate-50 border border-slate-100 rounded-lg px-3 py-1">* required fields</span>
           </div>
 
@@ -162,9 +207,9 @@ export default function RegisterUserPage() {
 
               {/* Password */}
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-600 uppercase tracking-wide">Password *</label>
+                <label className="text-xs font-bold text-slate-600 uppercase tracking-wide">Password {editUserId ? '(leave blank to keep current)' : '*'}</label>
                 <input
-                  type="password" name="password" required
+                  type="password" name="password" required={!editUserId}
                   value={formData.password} onChange={handleChange}
                   placeholder="••••••••"
                   className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-800 outline-none focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all text-sm"
@@ -228,7 +273,7 @@ export default function RegisterUserPage() {
               >
                 {status === 'loading'
                   ? <><Loader2 className="w-4 h-4 animate-spin" /> Processing...</>
-                  : <><UserPlus className="w-4 h-4" /> Create User</>
+                  : <><UserPlus className="w-4 h-4" /> {editUserId ? 'Update User' : 'Create User'}</>
                 }
               </button>
             </div>
@@ -264,6 +309,8 @@ export default function RegisterUserPage() {
           users={filteredUsers}
           loading={isLoadingUsers}
           emptyMessage={filterRole === 'All' ? "No users yet. Click 'Register New User' to add one." : `No ${filterRole} users found.`}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
         />
       </div>
 
