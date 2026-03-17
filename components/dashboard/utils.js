@@ -1,5 +1,3 @@
-// Helper: extract users array from any API response format
-// Handles: array directly, { users: [] }, { data: [] }, { result: [] }
 export function extractUsers(responseData) {
   if (Array.isArray(responseData)) return responseData;
   if (Array.isArray(responseData?.users)) return responseData.users;

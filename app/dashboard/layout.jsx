@@ -14,6 +14,8 @@ import {
   LogOut,
   Layers,
   Loader2,
+  CalendarDays,
+  ImageUp,
 } from 'lucide-react';
 
 // All possible nav items in the dashboard
@@ -29,6 +31,18 @@ const ALL_NAV_ITEMS = [
     href: '/dashboard/register',
     adminOnly: true,
     Icon: UserPlus,
+  },
+  {
+    name: 'Events / Schools',
+    href: '/dashboard/events',
+    adminOnly: true,
+    Icon: CalendarDays,
+  },
+  {
+    name: 'Upload Photos',
+    href: '/dashboard/events/upload',
+    adminOnly: true,
+    Icon: ImageUp,
   },
   {
     name: 'Manage Posts',
