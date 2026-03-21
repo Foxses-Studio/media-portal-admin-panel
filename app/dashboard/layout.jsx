@@ -16,6 +16,7 @@ import {
   Loader2,
   CalendarDays,
   ImageUp,
+  GraduationCap,
 } from 'lucide-react';
 
 // All possible nav items in the dashboard
@@ -43,6 +44,12 @@ const ALL_NAV_ITEMS = [
     href: '/dashboard/events/upload',
     adminOnly: true,
     Icon: ImageUp,
+  },
+  {
+    name: 'Student Profiles',
+    href: '/dashboard/students',
+    adminOnly: true,
+    Icon: GraduationCap,
   },
   {
     name: 'Manage Posts',
