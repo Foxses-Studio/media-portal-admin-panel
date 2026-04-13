@@ -17,6 +17,8 @@ import {
   CalendarDays,
   ImageUp,
   GraduationCap,
+  MessagesSquare,
+  Printer,
 } from 'lucide-react';
 
 // All possible nav items in the dashboard
@@ -50,6 +52,18 @@ const ALL_NAV_ITEMS = [
     href: '/dashboard/students',
     adminOnly: true,
     Icon: GraduationCap,
+  },
+  {
+    name: 'Support Tickets',
+    href: '/dashboard/support',
+    adminOnly: true,
+    Icon: MessagesSquare,
+  },
+  {
+    name: 'Contact Sheet',
+    href: '/dashboard/contact-sheet',
+    adminOnly: true,
+    Icon: Printer,
   },
   {
     name: 'Manage Posts',

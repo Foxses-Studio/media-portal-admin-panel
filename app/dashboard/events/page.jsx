@@ -9,20 +9,22 @@ import {
 import useAxios from '@/hooks/useAxios';
 import Swal from 'sweetalert2';
 
+import Papa from 'papaparse';
+
 const PAGE_SIZE = 10;
 
 // ── Demo CSV templates per context ──────────────────────────────────────────
 const DEMO_CSV = {
-  'bulk': `className,studentId,firstName,lastName,parentEmail
-Grade 3A,S001,Alice,Johnson,alice.parent@email.com
-Grade 3A,S002,Bob,Smith,bob.parent@email.com
-Grade 3B,S003,Carol,White,carol.parent@email.com
-Grade 3B,S004,David,Brown,david.parent@email.com`,
-  'students': `studentId,firstName,lastName,parentEmail
-S001,Alice,Johnson,alice.parent@email.com
-S002,Bob,Smith,bob.parent@email.com
-S003,Carol,White,carol.parent@email.com
-S004,David,Brown,`,
+  'bulk': `className,studentId,firstName,lastName,parentEmail,dateOfBirth
+Grade 3A,S001,Alice,Johnson,alice.parent@email.com,2015-05-12
+Grade 3A,S002,Bob,Smith,bob.parent@email.com,2016-01-20
+Grade 3B,S003,Carol,White,carol.parent@email.com,2015-11-08
+Grade 3B,S004,David,Brown,david.parent@email.com,2016-03-30`,
+  'students': `studentId,firstName,lastName,parentEmail,dateOfBirth
+S001,Alice,Johnson,alice.parent@email.com,2015-05-12
+S002,Bob,Smith,bob.parent@email.com,2016-01-20
+S003,Carol,White,carol.parent@email.com,2015-11-08
+S004,David,Brown,,2016-03-30`,
 };
 
 function downloadDemoCSV(type) {
@@ -164,27 +166,27 @@ export default function EventsPage() {
   const handleAddStudent = async () => {
     const { value: fv } = await Swal.fire({
       title: 'New Student',
-      html: '<input id="sw-id" class="swal2-input" placeholder="Student ID"><input id="sw-fn" class="swal2-input" placeholder="First Name"><input id="sw-ln" class="swal2-input" placeholder="Last Name"><input id="sw-em" class="swal2-input" placeholder="Parent Email (optional)">',
+      html: '<input id="sw-id" class="swal2-input" placeholder="Student ID"><input id="sw-fn" class="swal2-input" placeholder="First Name"><input id="sw-ln" class="swal2-input" placeholder="Last Name"><input id="sw-em" class="swal2-input" placeholder="Parent Email (optional)"><input id="sw-dob" type="date" class="swal2-input" placeholder="Date of Birth" style="margin-top: 15px; width: 80%; max-width: 100%; border: 1px solid #d9d9d9; border-radius: 4px; padding: 0 12px; height: 3.25em;">',
       focusConfirm: false, showCancelButton: true,
-      preConfirm: () => [document.getElementById('sw-id').value, document.getElementById('sw-fn').value, document.getElementById('sw-ln').value, document.getElementById('sw-em').value]
+      preConfirm: () => [document.getElementById('sw-id').value, document.getElementById('sw-fn').value, document.getElementById('sw-ln').value, document.getElementById('sw-em').value, document.getElementById('sw-dob').value]
     });
     if (fv) {
-      const [studentId, firstName, lastName, parentEmail] = fv;
-      if (!studentId || !firstName || !lastName) return Swal.fire('Error', 'ID, First Name, Last Name required', 'error');
-      try { await axios.post(`/events/classes/${current.id}/students`, { studentId, firstName, lastName, parentEmail }); fetchStudents(current.id); } catch (e) { Swal.fire('Error', e.response?.data?.message || 'Error', 'error'); }
+      const [studentId, firstName, lastName, parentEmail, dateOfBirth] = fv;
+      if (!studentId || !firstName || !lastName || !dateOfBirth) return Swal.fire('Error', 'ID, First Name, Last Name and Date of Birth required', 'error');
+      try { await axios.post(`/events/classes/${current.id}/students`, { studentId, firstName, lastName, parentEmail, dateOfBirth }); fetchStudents(current.id); } catch (e) { Swal.fire('Error', e.response?.data?.message || 'Error', 'error'); }
     }
   };
   const handleEditStudent = async (st) => {
     const { value: fv } = await Swal.fire({
       title: 'Edit Student',
-      html: `<input id="sw-id" class="swal2-input" value="${st.studentId}" placeholder="Student ID"><input id="sw-fn" class="swal2-input" value="${st.firstName}" placeholder="First Name"><input id="sw-ln" class="swal2-input" value="${st.lastName}" placeholder="Last Name"><input id="sw-em" class="swal2-input" value="${st.parentEmail || ''}" placeholder="Parent Email">`,
+      html: `<input id="sw-id" class="swal2-input" value="${st.studentId}" placeholder="Student ID"><input id="sw-fn" class="swal2-input" value="${st.firstName}" placeholder="First Name"><input id="sw-ln" class="swal2-input" value="${st.lastName}" placeholder="Last Name"><input id="sw-em" class="swal2-input" value="${st.parentEmail || ''}" placeholder="Parent Email"><input id="sw-dob" type="date" class="swal2-input" value="${st.dob ? new Date(st.dob).toISOString().split('T')[0] : ''}" placeholder="Date of Birth" style="margin-top: 15px; width: 80%; max-width: 100%; border: 1px solid #d9d9d9; border-radius: 4px; padding: 0 12px; height: 3.25em;">`,
       focusConfirm: false, showCancelButton: true,
-      preConfirm: () => [document.getElementById('sw-id').value, document.getElementById('sw-fn').value, document.getElementById('sw-ln').value, document.getElementById('sw-em').value]
+      preConfirm: () => [document.getElementById('sw-id').value, document.getElementById('sw-fn').value, document.getElementById('sw-ln').value, document.getElementById('sw-em').value, document.getElementById('sw-dob').value]
     });
     if (fv) {
-      const [studentId, firstName, lastName, parentEmail] = fv;
-      if (!studentId || !firstName || !lastName) return Swal.fire('Error', 'ID, First Name, Last Name required', 'error');
-      try { await axios.put(`/events/students/${st._id}`, { studentId, firstName, lastName, parentEmail }); fetchStudents(current.id); } catch (e) { Swal.fire('Error', e.response?.data?.message || 'Error', 'error'); }
+      const [studentId, firstName, lastName, parentEmail, dateOfBirth] = fv;
+      if (!studentId || !firstName || !lastName || !dateOfBirth) return Swal.fire('Error', 'ID, First Name, Last Name and Date of Birth required', 'error');
+      try { await axios.put(`/events/students/${st._id}`, { studentId, firstName, lastName, parentEmail, dateOfBirth }); fetchStudents(current.id); } catch (e) { Swal.fire('Error', e.response?.data?.message || 'Error', 'error'); }
     }
   };
   const handleDeleteStudent = async (st) => {
@@ -276,6 +278,27 @@ export default function EventsPage() {
     const [files, setFiles] = useState([]);
     const [isUploading, setIsUploading] = useState(false);
     const [showPreview, setShowPreview] = useState(false);
+    const [parsedData, setParsedData] = useState([]);
+    const [parsedHeaders, setParsedHeaders] = useState([]);
+
+    useEffect(() => {
+      if (files.length === 1 && files[0].name.endsWith('.csv')) {
+        Papa.parse(files[0], {
+          header: true,
+          skipEmptyLines: true,
+          complete: (results) => {
+            if (results.meta && results.meta.fields) {
+               setParsedHeaders(results.meta.fields);
+            }
+            setParsedData(results.data);
+            setShowPreview(true);
+          }
+        });
+      } else {
+        setParsedData([]);
+        setParsedHeaders([]);
+      }
+    }, [files]);
 
     if (!isOpen) return null;
 
@@ -292,7 +315,33 @@ export default function EventsPage() {
       setIsUploading(true);
       try {
         const res = await axios.post(url, fd, { headers: { 'Content-Type': 'multipart/form-data' } });
-        Swal.fire('Success', res.data.message || 'Upload complete', 'success');
+        const d = res.data?.data || {};
+        const isBulk = d.addedClasses !== undefined;
+        let htmlMsg = `<div class="text-sm text-left space-y-2 mt-2" style="color: #475569;">`;
+        if (isBulk) {
+           htmlMsg += `<p><strong>Classes Added:</strong> ${d.addedClasses || 0}</p>`;
+           htmlMsg += `<p><strong>Students Added/Updated:</strong> ${d.addedStudents || 0}</p>`;
+        } else if (d.added !== undefined) {
+           htmlMsg += `<p><strong>Students Processed:</strong> ${d.added || 0}</p>`;
+        } else if (d.matched !== undefined) {
+           htmlMsg += `<p><strong>Images Matched:</strong> ${d.matched || 0}</p>`;
+           htmlMsg += `<p><strong>Unmatched:</strong> ${d.unmatched || 0}</p>`;
+        }
+        
+        let errorsCount = d.errors || 0;
+        if (errorsCount > 0) {
+           htmlMsg += `<div style="background: #fef2f2; border-left: 4px solid #ef4444; padding: 12px; margin-top: 16px; border-radius: 4px;">`;
+           htmlMsg += `<p style="color: #b91c1c; font-weight: bold; margin: 0;">⚠️ Rows skipped: ${errorsCount}</p>`;
+           htmlMsg += `<p style="color: #ef4444; font-size: 11px; margin-top: 4px;">Missing required fields (ID, First Name, Last Name).</p>`;
+           htmlMsg += `</div>`;
+        } else if (d.errors !== undefined || d.matched !== undefined) {
+           htmlMsg += `<div style="background: #ecfdf5; border-left: 4px solid #10b981; padding: 12px; margin-top: 16px; border-radius: 4px;">`;
+           htmlMsg += `<p style="color: #047857; font-weight: bold; margin: 0;">✅ Uploaded perfectly with no errors!</p>`;
+           htmlMsg += `</div>`;
+        }
+        htmlMsg += `</div>`;
+
+        Swal.fire({ title: 'Upload Results', html: htmlMsg, icon: errorsCount > 0 ? 'warning' : 'success' });
         if (callback) callback(); onClose(); setFiles([]);
       } catch (err) { Swal.fire('Error', err.response?.data?.message || 'Upload failed', 'error'); }
       finally { setIsUploading(false); }
@@ -367,9 +416,9 @@ export default function EventsPage() {
                 </div>
 
                 {showPreview && (
-                  <div className="overflow-x-auto">
+                  <div className="overflow-x-auto max-h-64 overflow-y-auto">
                     <table className="w-full text-left text-xs">
-                      <thead>
+                      <thead className="sticky top-0 z-10 bg-[#f9fafb]">
                         <tr style={{ background: '#f9fafb', borderBottom: '1px solid #f3f4f6' }}>
                           {csvHeaders.map((h, i) => (
                             <th key={i} className="px-4 py-2 font-semibold uppercase tracking-wider" style={{ color: '#9ca3af', fontSize: '10px' }}>{h}</th>
@@ -380,7 +429,7 @@ export default function EventsPage() {
                         {csvData.map((row, i) => (
                           <tr key={i} style={{ borderBottom: i < csvData.length - 1 ? '1px solid #f9fafb' : 'none' }}>
                             {row.map((cell, j) => (
-                              <td key={j} className="px-4 py-2.5 font-medium" style={{ color: cell ? '#374151' : '#d1d5db' }}>
+                              <td key={j} className="px-4 py-2.5 font-medium whitespace-nowrap" style={{ color: cell ? '#374151' : '#d1d5db' }}>
                                 {cell || <span style={{ color: '#d1d5db' }}>—</span>}
                               </td>
                             ))}
@@ -390,6 +439,59 @@ export default function EventsPage() {
                     </table>
                   </div>
                 )}
+              </div>
+            )}
+
+            {/* Actual Uploaded CSV Preview Section */}
+            {parsedData.length > 0 && (
+              <div className="rounded-xl overflow-hidden" style={{ border: '1px solid #10b981' }}>
+                <div className="flex items-center justify-between px-4 py-3" style={{ background: 'rgba(16,185,129,0.05)', borderBottom: '1px solid rgba(16,185,129,0.2)' }}>
+                  <div className="flex items-center gap-2">
+                    <FileText className="w-4 h-4" style={{ color: '#10b981' }} />
+                    <span className="text-xs font-semibold" style={{ color: '#047857' }}>
+                      Ready to Upload Preview
+                    </span>
+                    <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-md" style={{ background: 'rgba(16,185,129,0.1)', color: '#047857' }}>
+                      {parsedData.length} valid rows
+                    </span>
+                  </div>
+                </div>
+
+                <div className="overflow-x-auto max-h-64 overflow-y-auto">
+                  <table className="w-full text-left text-xs">
+                    <thead className="sticky top-0 z-10 bg-white shadow-sm">
+                      <tr style={{ background: '#f9fafb', borderBottom: '1px solid #f3f4f6' }}>
+                        {parsedHeaders.map((h, i) => (
+                          <th key={`ph-${i}`} className="px-4 py-2 font-semibold uppercase tracking-wider" style={{ color: '#047857', fontSize: '10px' }}>{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {parsedData.slice(0, 50).map((row, i) => (
+                        <tr key={`pr-${i}`} style={{ borderBottom: i < Math.min(parsedData.length, 50) - 1 ? '1px solid #f9fafb' : 'none' }}>
+                          {parsedHeaders.map((h, j) => {
+                            const val = row[h];
+                            const isMissing = !val || !val.trim();
+                            // Required fields roughly check: containing id, name
+                            const isRequired = h.toLowerCase().includes('id') || h.toLowerCase().includes('name') || h.toLowerCase() === 'class';
+                            return (
+                               <td key={`pc-${j}`} className="px-4 py-2.5 font-medium whitespace-nowrap" style={{ color: isMissing ? (isRequired ? '#ef4444' : '#d1d5db') : '#374151' }}>
+                                 {val || (isRequired ? <span className="text-red-500 font-bold">MISSING</span> : <span style={{ color: '#d1d5db' }}>—</span>)}
+                               </td>
+                            );
+                          })}
+                        </tr>
+                      ))}
+                      {parsedData.length > 50 && (
+                        <tr>
+                          <td colSpan={parsedHeaders.length} className="px-4 py-3 text-center text-xs font-semibold" style={{ color: '#10b981', background: 'rgba(16,185,129,0.02)' }}>
+                            + {parsedData.length - 50} more rows
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             )}
 
@@ -673,18 +775,22 @@ export default function EventsPage() {
                     <col style={{ width: COL_W }} />
                     <col style={{ width: COL_W }} />
                     <col style={{ width: COL_W }} />
+                    <col style={{ width: COL_W }} />
+                    <col style={{ width: COL_W }} />
                   </colgroup>
                   <thead>
                     <tr style={{ background: '#f9fafb', borderBottom: '1px solid #f3f4f6' }}>
                       <th className="py-3 px-5 text-left text-[11px] font-semibold uppercase tracking-wider" style={{ color: '#9ca3af' }}>Student</th>
                       <th className="py-3 px-5 text-left text-[11px] font-semibold uppercase tracking-wider" style={{ color: '#9ca3af' }}>Student ID</th>
                       <th className="py-3 px-5 text-left text-[11px] font-semibold uppercase tracking-wider" style={{ color: '#9ca3af' }}>Parent Email</th>
+                      <th className="py-3 px-5 text-left text-[11px] font-semibold uppercase tracking-wider" style={{ color: '#9ca3af' }}>Date of Birth</th>
+                      <th className="py-3 px-5 text-left text-[11px] font-semibold uppercase tracking-wider" style={{ color: '#9ca3af' }}>Access Code</th>
                       <th className="py-3 px-5 text-right text-[11px] font-semibold uppercase tracking-wider" style={{ color: '#9ca3af' }}>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
                     {paginatedList.length === 0 ? (
-                      <tr><td colSpan={4}><EmptyRow icon={<Users className="w-6 h-6" />} text="No students yet" /></td></tr>
+                      <tr><td colSpan={6}><EmptyRow icon={<Users className="w-6 h-6" />} text="No students yet" /></td></tr>
                     ) : paginatedList.map(st => (
                       <tr key={st._id} className="plain-row" style={{ borderBottom: '1px solid #f9fafb' }}>
                         <td className="py-3.5 px-5">
@@ -701,6 +807,14 @@ export default function EventsPage() {
                         </td>
                         <td className="py-3.5 px-5 text-sm truncate" style={{ color: st.parentEmail ? '#374151' : '#d1d5db' }}>
                           {st.parentEmail || '—'}
+                        </td>
+                        <td className="py-3.5 px-5 text-sm truncate" style={{ color: st.dob ? '#374151' : '#d1d5db' }}>
+                          {st.dob ? new Date(st.dob).toLocaleDateString() : '—'}
+                        </td>
+                        <td className="py-3.5 px-5">
+                          <span className="inline-block text-[11px] font-mono font-bold px-2.5 py-1 rounded-md" style={{ background: 'rgba(16,185,129,0.1)', color: '#047857', border: '1px solid rgba(16,185,129,0.2)' }}>
+                            {st.uniqueCode || '—'}
+                          </span>
                         </td>
                         <td className="py-3.5 px-5">
                           <div className="flex items-center justify-end gap-1.5">
